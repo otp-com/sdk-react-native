@@ -1,0 +1,16 @@
+.DS_Store
+node_modules/
+lib/
+*.tgz
+
+# The example app's dependencies and build output. The app itself is committed.
+example/node_modules/
+example/ios/Pods/
+example/ios/build/
+example/ios/.xcode.env.local
+example/android/build/
+example/android/app/build/
+example/android/.gradle/
+example/android/.cxx/
+example/vendor/
+example/.bundle/
