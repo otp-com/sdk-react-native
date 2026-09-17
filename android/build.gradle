@@ -1,0 +1,51 @@
+// No buildscript block and no plugin versions. This project is built inside the consuming app's
+// Gradle build, so the Android and Kotlin plugins come from the app's own classpath: pinning versions
+// here would mean a second, conflicting copy of them.
+apply plugin: "com.android.library"
+apply plugin: "org.jetbrains.kotlin.android"
+// Generates the module interface this package implements, from src/NativeOtp.ts. It runs in the
+// consuming app's build, which is why nothing generated is committed here.
+apply plugin: "com.facebook.react"
+
+// Read from the app when it sets them, which every React Native template does, so this package
+// compiles against the same SDK the app does rather than pinning one of its own.
+def resolve = { property, fallback ->
+    rootProject.ext.has(property) ? rootProject.ext.get(property) : fallback
+}
+
+android {
+    namespace "com.otp.sdk.reactnative"
+    compileSdk resolve("compileSdkVersion", 37)
+
+    defaultConfig {
+        // 26, not React Native's own 24. Hardware-backed key attestation is the security floor of
+        // the SDK underneath and it is only guaranteed from here, so an app that builds against
+        // plain React Native can fail to build against this package. That is the reason, not an
+        // oversight: see the repository README.
+        minSdk 26
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+repositories {
+    // First, and only while the Android SDK is unreleased: `./gradlew :otp:publishToMavenLocal` in
+    // the android directory of the source repository is what puts it there. Once the artifact is on
+    // Maven Central this line does nothing but miss.
+    mavenLocal()
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    // Version supplied by the React Native Gradle plugin, so this package follows the app.
+    implementation "com.facebook.react:react-android"
+    implementation "com.otp:sdk-android:0.1.0"
+}

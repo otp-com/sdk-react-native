@@ -1,0 +1,56 @@
+{
+  "name": "@otp.com/sdk-react-native",
+  "version": "0.1.0",
+  "description": "Phone and email verification for React Native, over the native otp.com SDKs. Requires iOS 15 and Android API 26.",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "src",
+    "ios",
+    "android",
+    "*.podspec",
+    "!**/__tests__",
+    "!android/build",
+    "!android/.gradle",
+    "!android/.cxx",
+    "!ios/build",
+    "!**/*.tsbuildinfo"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "react-native",
+    "otp",
+    "verification"
+  ],
+  "license": "SEE LICENSE IN LICENSE",
+  "private": false,
+  "peerDependencies": {
+    "react": ">=19.0.0",
+    "react-native": ">=0.87.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.1",
+    "react": "^19.2.3",
+    "react-native": "^0.87.1",
+    "typescript": "^5.9.0"
+  },
+  "codegenConfig": {
+    "name": "OtpSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.otp.sdk.reactnative"
+    }
+  }
+}
