@@ -33,7 +33,7 @@
     "otp",
     "verification"
   ],
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "LicenseRef-otp.com-Commercial",
   "private": false,
   "peerDependencies": {
     "react": ">=19.0.0",
