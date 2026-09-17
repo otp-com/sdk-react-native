@@ -11,6 +11,7 @@ import com.otp.sdk.OtpException
 import com.otp.sdk.OtpSession
 import com.otp.sdk.OtpStatus
 import com.otp.sdk.PendingOtp
+import com.otp.sdk.RejectionReason
 import com.otp.sdk.Verification
 import com.otp.sdk.resumeInterrupted
 import com.otp.sdk.ui.RecipientKind
@@ -213,14 +214,23 @@ class OtpModule(private val context: ReactApplicationContext) : NativeOtpSpec(co
                 is CodeSubmission.Verified -> {
                     putMap("verification", map(outcome.verification))
                     putNull("attemptsRemaining")
+                    putNull("reason")
                 }
 
                 is CodeSubmission.Rejected -> {
                     putNull("verification")
                     outcome.attemptsRemaining?.let { putInt("attemptsRemaining", it) }
                         ?: putNull("attemptsRemaining")
+                    putString("reason", string(outcome.reason))
                 }
             }
+        }
+
+        fun string(reason: RejectionReason): String = when (reason) {
+            RejectionReason.INCORRECT_CODE -> "incorrectCode"
+            RejectionReason.EXPIRED -> "expired"
+            RejectionReason.NO_ATTEMPTS_LEFT -> "noAttemptsLeft"
+            RejectionReason.UNKNOWN -> "unknown"
         }
 
         fun string(status: OtpStatus): String = when (status) {

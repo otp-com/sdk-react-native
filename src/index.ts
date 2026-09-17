@@ -43,10 +43,13 @@ export interface Verification {
   tokenExpiresAt: Date;
 }
 
+/** Why a submitted code was rejected. */
+export type RejectionReason = 'incorrectCode' | 'expired' | 'noAttemptsLeft' | 'unknown';
+
 /** What submitting a code produced. A wrong code is an outcome, not an error. */
 export type CodeSubmission =
   | { matched: true; verification: Verification }
-  | { matched: false; attemptsRemaining: number | null };
+  | { matched: false; attemptsRemaining: number | null; reason: RejectionReason };
 
 /**
  * A verification this install started and has not answered, found again after a restart.
@@ -193,9 +196,14 @@ const toVerification = (native: NativeVerification): Verification => ({
   tokenExpiresAt: new Date(native.tokenExpiresAt),
 });
 
+const KNOWN_REJECTION_REASONS: RejectionReason[] = ['incorrectCode', 'expired', 'noAttemptsLeft', 'unknown'];
+
+const toRejectionReason = (reason: string | null): RejectionReason =>
+  KNOWN_REJECTION_REASONS.includes(reason as RejectionReason) ? (reason as RejectionReason) : 'unknown';
+
 const toCodeSubmission = (native: NativeCodeSubmission): CodeSubmission => {
   if (native.verification === null) {
-    return { matched: false, attemptsRemaining: native.attemptsRemaining };
+    return { matched: false, attemptsRemaining: native.attemptsRemaining, reason: toRejectionReason(native.reason) };
   }
   return { matched: true, verification: toVerification(native.verification) };
 };

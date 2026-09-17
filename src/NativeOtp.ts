@@ -47,6 +47,8 @@ export interface NativeCodeSubmission {
   verification: NativeVerification | null;
   /** Set when the code did not match, and null once the verification is resolved. */
   attemptsRemaining: number | null;
+  /** `incorrectCode`, `expired`, `noAttemptsLeft`, or `unknown`. Null when the code matched. */
+  reason: string | null;
 }
 
 export interface Spec extends TurboModule {

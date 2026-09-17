@@ -249,11 +249,20 @@ public final class OtpBridge: NSObject {
   private static func dictionary(_ outcome: CodeSubmission) -> [String: Any] {
     switch outcome {
     case .verified(let verification):
-      ["verification": dictionary(verification), "attemptsRemaining": NSNull()]
-    case .rejected(let attemptsRemaining):
-      ["verification": NSNull(), "attemptsRemaining": attemptsRemaining as Any? ?? NSNull()]
+      ["verification": dictionary(verification), "attemptsRemaining": NSNull(), "reason": NSNull()]
+    case .rejected(let attemptsRemaining, let reason):
+      ["verification": NSNull(), "attemptsRemaining": attemptsRemaining as Any? ?? NSNull(), "reason": string(reason)]
     @unknown default:
-      ["verification": NSNull(), "attemptsRemaining": NSNull()]
+      ["verification": NSNull(), "attemptsRemaining": NSNull(), "reason": "unknown"]
+    }
+  }
+
+  private static func string(_ reason: RejectionReason) -> String {
+    switch reason {
+    case .incorrectCode: "incorrectCode"
+    case .expired: "expired"
+    case .noAttemptsLeft: "noAttemptsLeft"
+    case .unknown: "unknown"
     }
   }
 
