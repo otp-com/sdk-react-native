@@ -141,6 +141,13 @@ class OtpModule(private val context: ReactApplicationContext) : NativeOtpSpec(co
                 promise.reject("validationFailed", refusal.message, null)
             } catch (error: OtpException) {
                 promise.reject(code(error.kind), error.message ?: code(error.kind), error, details(error))
+            } catch (cancellation: kotlinx.coroutines.CancellationException) {
+                // Rethrow unchanged: this is how a coroutine is cancelled, not a failure to report.
+                throw cancellation
+            } catch (error: Throwable) {
+                // A promise must not be left unanswered: without this catch, anything the SDK did not
+                // name escapes the coroutine and crashes the app instead of rejecting.
+                promise.reject("unexpected", error.message ?: error.toString(), error)
             }
         }
     }
