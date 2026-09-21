@@ -17,6 +17,7 @@
     "ios",
     "android",
     "*.podspec",
+    "NOTICE",
     "!**/__tests__",
     "!android/build",
     "!android/.gradle",
@@ -33,7 +34,7 @@
     "otp",
     "verification"
   ],
-  "license": "LicenseRef-otp.com-Commercial",
+  "license": "Apache-2.0",
   "private": false,
   "peerDependencies": {
     "react": ">=19.0.0",

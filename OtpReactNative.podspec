@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
   s.version      = package['version']
   s.summary      = package['description']
   s.homepage     = 'https://otp.com'
-  s.license      = { type: 'Commercial', file: 'LICENSE' }
+  s.license      = { type: 'Apache-2.0', file: 'LICENSE' }
   s.authors      = { 'otp.com' => 'support@otp.com' }
   s.source       = { git: 'https://github.com/otp-com/sdk-react-native.git', tag: s.version.to_s }
 
