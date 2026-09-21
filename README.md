@@ -41,15 +41,20 @@ npm install @otp.com/sdk-react-native
 cd ios && pod install
 ```
 
-Then raise the Android floor in `android/build.gradle`:
+Then set the two Android SDK levels in `android/build.gradle`:
 
 ```gradle
 buildscript {
     ext {
         minSdkVersion = 26
+        compileSdkVersion = 37
     }
 }
 ```
+
+React Native's own defaults are lower on both. `minSdkVersion` is 26 for the hardware-attestation
+reason above; `compileSdkVersion` is 37 because the Android SDK this package wraps compiles against
+API 37, and Gradle refuses to build an app that compiles against less than a library it depends on.
 
 Nothing else to register: autolinking finds the native module on both platforms.
 
