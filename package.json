@@ -1,6 +1,6 @@
 {
   "name": "@otp.com/sdk-react-native",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Phone and email verification for React Native, over the native otp.com SDKs. Requires iOS 15 and Android API 26.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

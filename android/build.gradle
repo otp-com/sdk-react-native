@@ -47,5 +47,5 @@ repositories {
 dependencies {
     // Version supplied by the React Native Gradle plugin, so this package follows the app.
     implementation "com.facebook.react:react-android"
-    implementation "com.otp:sdk-android:0.3.0"
+    implementation "com.otp:sdk-android:0.3.1"
 }
