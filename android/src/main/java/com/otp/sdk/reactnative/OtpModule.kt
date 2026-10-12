@@ -7,6 +7,7 @@ import com.facebook.react.bridge.WritableNativeMap
 import com.otp.sdk.CodeSubmission
 import com.otp.sdk.OtpChannel
 import com.otp.sdk.OtpClient
+import com.otp.sdk.OtpCompletion
 import com.otp.sdk.OtpException
 import com.otp.sdk.OtpSession
 import com.otp.sdk.OtpStatus
@@ -90,6 +91,15 @@ class OtpModule(private val context: ReactApplicationContext) : NativeOtpSpec(co
         answer(promise) {
             val id = uuid(otpId)
             val outcome = session(id).submit(code)
+            if (outcome is CodeSubmission.Verified) sessions.remove(id)
+            map(outcome)
+        }
+    }
+
+    override fun awaitApproval(otpId: String, promise: Promise) {
+        answer(promise) {
+            val id = uuid(otpId)
+            val outcome = session(id).awaitApproval()
             if (outcome is CodeSubmission.Verified) sessions.remove(id)
             map(outcome)
         }
@@ -208,6 +218,8 @@ class OtpModule(private val context: ReactApplicationContext) : NativeOtpSpec(co
             putString("expiresAt", iso(pending.expiresAt))
             putStringOrNull("resendAvailableAt", pending.resendAvailableAt?.let(::iso))
             putStringOrNull("handoffUrl", pending.handoffUrl)
+            putString("completion", string(pending.completion))
+            putMapOrNull("verification", pending.verification?.let(::map))
         }
 
         fun map(verification: Verification): WritableMap = WritableNativeMap().apply {
@@ -248,6 +260,12 @@ class OtpModule(private val context: ReactApplicationContext) : NativeOtpSpec(co
             OtpStatus.UNKNOWN -> "unknown"
         }
 
+        fun string(completion: OtpCompletion): String = when (completion) {
+            OtpCompletion.CODE -> "code"
+            OtpCompletion.INBOUND -> "inbound"
+            OtpCompletion.UNKNOWN -> "unknown"
+        }
+
         fun string(channel: OtpChannel): String = when (channel) {
             OtpChannel.SMS -> "sms"
             OtpChannel.WHATSAPP -> "whatsapp"
@@ -280,6 +298,10 @@ class OtpModule(private val context: ReactApplicationContext) : NativeOtpSpec(co
 
         fun WritableMap.putStringOrNull(key: String, value: String?) {
             if (value == null) putNull(key) else putString(key, value)
+        }
+
+        fun WritableMap.putMapOrNull(key: String, value: WritableMap?) {
+            if (value == null) putNull(key) else putMap(key, value)
         }
     }
 }

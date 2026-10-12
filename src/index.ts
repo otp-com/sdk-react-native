@@ -13,8 +13,15 @@ export type OtpChannel = 'sms' | 'whatsapp' | 'email' | 'telegram' | 'unknown';
 export type OtpStatus = 'pending' | 'approved' | 'failed' | 'expired' | 'unknown';
 
 /**
+ * How a verification is completed. `code` is the user entering a code, which the app submits.
+ * `inbound` is WhatsApp only: the message the user sends from `handoffUrl` approves it by itself,
+ * there is no code, and the app calls `awaitApproval`.
+ */
+export type OtpCompletion = 'code' | 'inbound' | 'unknown';
+
+/**
  * A verification that has been started and not yet answered. Both deadlines are here, so countdowns
- * run on the device: there is nothing to poll.
+ * run on the device: only an inbound verification is polled, and `awaitApproval` does that.
  */
 export interface PendingOtp {
   id: string;
@@ -28,8 +35,18 @@ export interface PendingOtp {
   expiresAt: Date;
   /** Null when this verification can no longer be resent at all. */
   resendAvailableAt: Date | null;
-  /** WhatsApp only: the link the user opens to be sent the code. */
+  /**
+   * WhatsApp only: the link the user opens to be sent the code, or to approve the verification by
+   * themselves when `completion` is `inbound`. Null on every other channel, and null on WhatsApp when
+   * the code was delivered directly.
+   */
   handoffUrl: string | null;
+  completion: OtpCompletion;
+  /**
+   * Only on the first read of an inbound verification after its approval, because the API issues
+   * that token once.
+   */
+  verification: Verification | null;
 }
 
 /**
@@ -122,6 +139,7 @@ export class OtpError extends Error {
 
 const KNOWN_CHANNELS: readonly OtpChannel[] = ['sms', 'whatsapp', 'email', 'telegram'];
 const KNOWN_STATUSES: readonly OtpStatus[] = ['pending', 'approved', 'failed', 'expired'];
+const KNOWN_COMPLETIONS: readonly OtpCompletion[] = ['code', 'inbound'];
 const KNOWN_ERROR_KINDS: readonly OtpErrorKind[] = [
   'notConfigured',
   'unauthorized',
@@ -148,6 +166,9 @@ const toChannel = (value: string | null): OtpChannel | null => {
 
 const toStatus = (value: string): OtpStatus =>
   KNOWN_STATUSES.includes(value as OtpStatus) ? (value as OtpStatus) : 'unknown';
+
+const toCompletion = (value: string): OtpCompletion =>
+  KNOWN_COMPLETIONS.includes(value as OtpCompletion) ? (value as OtpCompletion) : 'unknown';
 
 /**
  * Turns whatever the bridge rejected with into an `OtpError`.
@@ -188,6 +209,9 @@ const toPendingOtp = (native: NativePendingOtp): PendingOtp => ({
   expiresAt: new Date(native.expiresAt),
   resendAvailableAt: native.resendAvailableAt === null ? null : new Date(native.resendAvailableAt),
   handoffUrl: native.handoffUrl,
+  completion: toCompletion(native.completion),
+  // Loose on purpose, for the reason given in `resumeInterrupted`.
+  verification: native.verification == null ? null : toVerification(native.verification),
 });
 
 const toVerification = (native: NativeVerification): Verification => ({
@@ -270,7 +294,7 @@ export async function resumeInterrupted(): Promise<Verification | null> {
  * Starts a verification and has the code delivered, for an app drawing its own screens.
  *
  * Everything the screen needs is on the answer, including both deadlines, so countdowns run on the
- * device and there is nothing to poll.
+ * device. Only an inbound verification is polled, and `awaitApproval` does that.
  */
 export async function start(recipient: string, locale?: string): Promise<PendingOtp> {
   return toPendingOtp(await rejecting(() => NativeOtp.start(recipient, locale ?? null)));
@@ -279,6 +303,17 @@ export async function start(recipient: string, locale?: string): Promise<Pending
 /** Submits the code the user entered. */
 export async function submit(otpId: string, code: string): Promise<CodeSubmission> {
   return toCodeSubmission(await rejecting(() => NativeOtp.submit(otpId, code)));
+}
+
+/**
+ * Waits for an inbound verification to be approved by the message the user sent, polling the API
+ * every few seconds. Resolves with the same shape as `submit`: verified with the token, or rejected
+ * with a reason, `unknown` when the once-only token was already claimed.
+ *
+ * Call it only when `pending.completion === 'inbound'`; it rejects with `validationFailed` otherwise.
+ */
+export async function awaitApproval(otpId: string): Promise<CodeSubmission> {
+  return toCodeSubmission(await rejecting(() => NativeOtp.awaitApproval(otpId)));
 }
 
 /**
@@ -295,7 +330,8 @@ export async function resend(otpId: string, channel?: Exclude<OtpChannel, 'unkno
  * Picks a verification back up after the app was killed while the user was away receiving the code.
  * Its deadlines come back with it, so a screen can rebuild its countdowns.
  *
- * This is not a poll. Both deadlines are on ``PendingOtp`` and run on the device.
+ * This is not a poll. Both deadlines are on ``PendingOtp`` and run on the device; only an inbound
+ * verification is polled, and `awaitApproval` does that.
  */
 export async function resume(otpId: string): Promise<PendingOtp> {
   return toPendingOtp(await rejecting(() => NativeOtp.resume(otpId)));

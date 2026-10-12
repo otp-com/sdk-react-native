@@ -16,6 +16,12 @@ import { TurboModuleRegistry } from 'react-native';
 // JavaScript half of the world while the native half survives, so any state kept on one side only
 // would come back out of step with the other.
 
+export interface NativeVerification {
+  otpId: string;
+  token: string;
+  tokenExpiresAt: string;
+}
+
 export interface NativePendingOtp {
   id: string;
   /** `pending`, `approved`, `failed`, `expired`, or `unknown` for a status this build cannot name. */
@@ -26,14 +32,16 @@ export interface NativePendingOtp {
   codeLength: number;
   expiresAt: string;
   resendAvailableAt: string | null;
-  /** WhatsApp only: the link the user opens to be sent the code. */
+  /**
+   * WhatsApp only: the link the user opens to be sent the code, or to approve the verification by
+   * themselves when `completion` is `inbound`. Null on every other channel, and null on WhatsApp when
+   * the code was delivered directly.
+   */
   handoffUrl: string | null;
-}
-
-export interface NativeVerification {
-  otpId: string;
-  token: string;
-  tokenExpiresAt: string;
+  /** `code`, `inbound`, or `unknown` for a completion this build cannot name. */
+  completion: string;
+  /** Only on the first read of an inbound verification after its approval. */
+  verification: NativeVerification | null;
 }
 
 export interface NativeInterrupted {
@@ -78,6 +86,12 @@ export interface Spec extends TurboModule {
 
   start(recipient: string, locale: string | null): Promise<NativePendingOtp>;
   submit(otpId: string, code: string): Promise<NativeCodeSubmission>;
+
+  /**
+   * Waits for an inbound verification to be approved by the message the user sent, polling the API
+   * every few seconds. Resolves with the same shape as `submit`.
+   */
+  awaitApproval(otpId: string): Promise<NativeCodeSubmission>;
   resend(otpId: string, channel: string | null): Promise<NativePendingOtp>;
   resume(otpId: string): Promise<NativePendingOtp>;
 

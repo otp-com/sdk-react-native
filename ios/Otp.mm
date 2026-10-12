@@ -72,6 +72,13 @@ RCT_EXPORT_MODULE()
   [OtpBridge.shared submitOtpId:otpId code:code resolve:resolve reject:reject];
 }
 
+- (void)awaitApproval:(NSString *)otpId
+              resolve:(RCTPromiseResolveBlock)resolve
+               reject:(RCTPromiseRejectBlock)reject
+{
+  [OtpBridge.shared awaitApprovalOtpId:otpId resolve:resolve reject:reject];
+}
+
 - (void)resend:(NSString *)otpId
        channel:(NSString *)channel
        resolve:(RCTPromiseResolveBlock)resolve

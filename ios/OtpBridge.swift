@@ -115,6 +115,25 @@ public final class OtpBridge: NSObject {
     }
   }
 
+  @objc(awaitApprovalOtpId:resolve:reject:)
+  public func awaitApproval(
+    otpId: String,
+    resolve: @escaping (Any?) -> Void,
+    reject: @escaping (String?, String?, Error?) -> Void
+  ) {
+    Task {
+      await answer(resolve, reject) {
+        let id = try Self.uuid(otpId)
+        let session = try await sessions.session(for: id)
+        let outcome = try await session.awaitApproval()
+        if case .verified = outcome {
+          await sessions.forget(id)
+        }
+        return Self.dictionary(outcome)
+      }
+    }
+  }
+
   @objc(resendOtpId:channel:resolve:reject:)
   public func resend(
     otpId: String,
@@ -235,6 +254,8 @@ public final class OtpBridge: NSObject {
       "expiresAt": iso(pending.expiresAt),
       "resendAvailableAt": pending.resendAvailableAt.map(iso) as Any? ?? NSNull(),
       "handoffUrl": pending.handoffURL?.absoluteString as Any? ?? NSNull(),
+      "completion": string(pending.completion),
+      "verification": pending.verification.map(dictionary) as Any? ?? NSNull(),
     ]
   }
 
@@ -272,6 +293,15 @@ public final class OtpBridge: NSObject {
     case .approved: "approved"
     case .failed: "failed"
     case .expired: "expired"
+    case .unknown: "unknown"
+    @unknown default: "unknown"
+    }
+  }
+
+  private static func string(_ completion: OtpCompletion) -> String {
+    switch completion {
+    case .code: "code"
+    case .inbound: "inbound"
     case .unknown: "unknown"
     @unknown default: "unknown"
     }
